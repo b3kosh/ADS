@@ -13,26 +13,58 @@ class BankAccount {
 
     @Override
     public String toString() {
-        return username + " (ID: " + accountNumber + ") – Balance: " + balance;
+        return username + " – Balance: " + balance;
+    }
+}
+
+// САМОПИСНЫЙ СТЕК (Task 3)
+class MyStack {
+    private class Node {
+        String data;
+        Node next;
+        Node(String data) { this.data = data; }
+    }
+
+    private Node top;
+
+    public void push(String data) {
+        Node newNode = new Node(data);
+        newNode.next = top;
+        top = newNode;
+    }
+
+    public String pop() {
+        if (isEmpty()) return null;
+        String data = top.data;
+        top = top.next;
+        return data;
+    }
+
+    public String peek() {
+        return isEmpty() ? null : top.data;
+    }
+
+    public boolean isEmpty() {
+        return top == null;
     }
 }
 
 public class Main {
     private static LinkedList<BankAccount> accounts = new LinkedList<>();
-    private static Stack<String> transactionHistory = new Stack<>();
-    private static Queue<String> billQueue = new LinkedList<>();
+    private static MyStack transactionHistory = new MyStack(); // Наш стек
+    private static Queue<String> billQueue = new LinkedList<>(); // Стандартная очередь
     private static Queue<String> accountRequests = new LinkedList<>();
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        predefinePhysicalData();
+        // Физическая структура (массив) - Task 6
+        BankAccount[] physicalArray = new BankAccount[2];
+        physicalArray[0] = new BankAccount("101", "Ali", 150000);
+        physicalArray[1] = new BankAccount("102", "Sara", 220000);
+        Collections.addAll(accounts, physicalArray);
 
         while (true) {
-            System.out.println("\n--- MAIN MENU ---");
-            System.out.println("1 – Enter Bank");
-            System.out.println("2 – Enter ATM");
-            System.out.println("3 – Admin Area");
-            System.out.println("4 – Exit");
+            System.out.println("\n1.Bank 2.ATM 3.Admin 4.Exit");
             int choice = scanner.nextInt();
             scanner.nextLine();
 
@@ -45,98 +77,53 @@ public class Main {
         }
     }
 
-    private static void predefinePhysicalData() {
-        BankAccount[] physicalArray = new BankAccount[3];
-        physicalArray[0] = new BankAccount("101", "Ali", 150000);
-        physicalArray[1] = new BankAccount("102", "Sara", 220000);
-        physicalArray[2] = new BankAccount("103", "Ivan", 50000);
-        Collections.addAll(accounts, physicalArray);
-    }
-
     private static void bankMenu() {
-        System.out.println("\n--- BANK MENU ---");
-        System.out.println("1. Request New Account");
-        System.out.println("2. Deposit Money");
-        System.out.println("3. Withdraw Money");
-        System.out.println("4. Pay a Bill");
-        System.out.println("5. Undo Last Transaction");
-        int choice = scanner.nextInt();
+        System.out.println("1.Request Account 2.Deposit 3.Withdraw 4.Undo Last");
+        int op = scanner.nextInt();
         scanner.nextLine();
 
-        if (choice == 1) {
-            System.out.print("Enter your name: ");
+        if (op == 1) {
+            System.out.print("Enter name: ");
             accountRequests.add(scanner.nextLine());
-            System.out.println("Request submitted.");
-        } else if (choice == 2 || choice == 3) {
-            System.out.print("Enter username: ");
-            String name = scanner.nextLine();
-            BankAccount account = findAccount(name);
-            if (account != null) {
-                System.out.print("Enter amount: ");
-                double amount = scanner.nextDouble();
-                if (choice == 2) {
-                    account.balance += amount;
-                    transactionHistory.push("Deposit " + amount + " to " + name);
-                } else {
-                    account.balance -= amount;
-                    transactionHistory.push("Withdraw " + amount + " from " + name);
-                }
-                System.out.println("Success. New balance: " + account.balance);
+        } else if (op == 2 || op == 3) {
+            System.out.print("Name: ");
+            BankAccount acc = findAccount(scanner.nextLine());
+            if (acc != null) {
+                System.out.print("Amount: ");
+                double amt = scanner.nextDouble();
+                if (op == 2) acc.balance += amt; else acc.balance -= amt;
+                transactionHistory.push((op == 2 ? "Deposit " : "Withdraw ") + amt + " for " + acc.username);
+                System.out.println("New balance: " + acc.balance);
             }
-        } else if (choice == 4) {
-            System.out.print("Enter Bill Name (e.g. Internet): ");
-            billQueue.add(scanner.nextLine());
-            System.out.println("Bill added to queue.");
-        } else if (choice == 5) {
-            if (!transactionHistory.isEmpty()) {
-                System.out.println("Undo: " + transactionHistory.pop() + " removed.");
-            }
+        } else if (op == 4) {
+            String undone = transactionHistory.pop();
+            System.out.println(undone != null ? "Removed: " + undone : "History empty");
         }
     }
 
     private static void atmMenu() {
-        System.out.print("\nEnter username: ");
-        String name = scanner.nextLine();
-        BankAccount account = findAccount(name);
-        if (account != null) {
-            System.out.println("1. Enquiry Balance\n2. Withdraw");
-            int choice = scanner.nextInt();
-            if (choice == 1) System.out.println("Balance: " + account.balance);
-            else {
-                System.out.print("Amount: ");
-                double amt = scanner.nextDouble();
-                account.balance -= amt;
-                transactionHistory.push("Withdraw " + amt + " from " + name);
-                System.out.println("Done.");
-            }
+        System.out.print("Enter name: ");
+        BankAccount acc = findAccount(scanner.nextLine());
+        if (acc != null) {
+            System.out.println("Balance: " + acc.balance);
         }
     }
 
     private static void adminMenu() {
-        System.out.println("\n--- ADMIN MENU ---");
-        System.out.println("1. Process Account Request");
-        System.out.println("2. Process Bill Payment");
-        System.out.println("3. View All Accounts");
-        int choice = scanner.nextInt();
-        scanner.nextLine();
-
-        if (choice == 1 && !accountRequests.isEmpty()) {
-            String name = accountRequests.poll();
-            String id = String.valueOf(100 + accounts.size() + 1);
-            accounts.add(new BankAccount(id, name, 0));
-            System.out.println("Account created for: " + name);
-        } else if (choice == 2 && !billQueue.isEmpty()) {
-            System.out.println("Processing: " + billQueue.poll());
-        } else if (choice == 3) {
-            accounts.forEach(System.out::println);
+        System.out.println("1.Process Account 2.View All");
+        int op = scanner.nextInt();
+        if (op == 1 && !accountRequests.isEmpty()) {
+            accounts.add(new BankAccount("10" + (accounts.size()+1), accountRequests.poll(), 0));
+            System.out.println("Account opened.");
+        } else if (op == 2) {
+            for (BankAccount a : accounts) System.out.println(a);
         }
     }
 
     private static BankAccount findAccount(String name) {
-        for (BankAccount acc : accounts) {
-            if (acc.username.equalsIgnoreCase(name)) return acc;
+        for (BankAccount a : accounts) {
+            if (a.username.equalsIgnoreCase(name)) return a;
         }
-        System.out.println("Account not found.");
         return null;
     }
 }
