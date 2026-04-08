@@ -17,7 +17,7 @@ class BankAccount {
     }
 }
 
-// САМОПИСНЫЙ СТЕК (Task 3)
+// МОЙ СТЭК
 class MyStack {
     private class Node {
         String data;
@@ -57,7 +57,6 @@ public class Main {
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
-        // Физическая структура (массив) - Task 6
         BankAccount[] physicalArray = new BankAccount[2];
         physicalArray[0] = new BankAccount("101", "Ali", 150000);
         physicalArray[1] = new BankAccount("102", "Sara", 220000);
